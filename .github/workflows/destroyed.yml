@@ -1,0 +1,54 @@
+{
+  "name": "Merge group destroyed.yml",
+  "on": {
+    "merge_group": {
+      "types": [
+        "destroyed"
+      ]
+    }
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "jobs": {
+    "probe": {
+      "name": "Probe destroyed",
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 15,
+      "outputs": {
+        "evidence_sha256": "${{ steps.probe.outputs.evidence_sha256 }}"
+      },
+      "steps": [
+        {
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "uses": "actions/setup-node@v4",
+          "with": {
+            "node-version": "22",
+            "token": ""
+          }
+        },
+        {
+          "id": "probe",
+          "name": "Execute immutable source probe",
+          "run": "node probe.cjs",
+          "env": {
+            "CTX_SHA": "${{ github.sha }}",
+            "CTX_REF": "${{ github.ref }}",
+            "CTX_WORKFLOW_SHA": "${{ github.workflow_sha }}",
+            "CTX_WORKFLOW_REF": "${{ github.workflow_ref }}",
+            "WORKFLOW_MARKER": "destroyed.yml:pb3523-default"
+          }
+        },
+        {
+          "name": "Token absence and bounded live validation",
+          "run": "node hold.cjs",
+          "env": {
+            "PROBE_WORKFLOW": ".github/workflows/destroyed.yml"
+          }
+        }
+      ]
+    }
+  }
+}
